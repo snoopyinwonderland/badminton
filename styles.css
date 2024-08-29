@@ -1,0 +1,171 @@
+/* styles.css */
+body, html {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+#container {
+    display: flex;
+    height: 100vh;
+}
+
+#left-panel {
+    flex: 1;
+    background-color: #f0f0f0;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#right-panel {
+    flex: 1;
+    padding: 20px;
+    background-color: #ffffff;
+    border-left: 1px solid #ccc;
+}
+
+#court {
+    position: relative;
+    width: 80%;
+    height: 80%;
+    background-image: url('Badminton_Court.svg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(16, 1fr);
+    overflow: hidden;
+}
+
+#mode-selection {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.player {
+    position: absolute;
+    width: 20px; /* 기존 크기 유지 */
+    height: 20px; /* 기존 크기 유지 */
+    border-radius: 50%;
+    border: 2px solid black;
+}
+
+.red-player {
+    border: 3px solid red;
+}
+
+.yellow-player {
+    border: 3px solid yellow;
+}
+
+#yellow1 {
+    background-color: black;
+}
+
+#red1 {
+    background-color: black;
+}
+
+#yellow2 {
+    background-color: gray;
+}
+
+#red2 {
+    background-color: gray;
+}
+
+#shuttlecock-start, #shuttlecock-end {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    position: absolute;
+    cursor: pointer;
+}
+
+#shuttlecock-start {
+    background-image: url('shuttlecock_start.png');
+}
+
+#shuttlecock-end {
+    background-image: url('shuttlecock_end.png');
+    opacity: 0.5;
+    display: none; /* 초기에는 숨겨진 상태 */
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    position: absolute;
+}
+
+#content-display {
+    min-height: 200px;
+    margin-bottom: 20px;
+}
+
+#editor {
+    margin-top: 20px;
+}
+
+#editor-form {
+    margin-top: 20px;
+}
+
+#editor-form textarea, #editor-form input {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#editor-form button {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#editor-form button:hover {
+    background-color: #45a049;
+}
+
+.label-text {
+    margin-left: 5px;
+    font-weight: bold;
+    color: white;
+}
+
+.checkbox-container .label-text {
+    font-size: 14px; /* 폰트 크기를 줄입니다. */
+    color: black; /* 폰트 색상을 검은색으로 설정합니다. */
+    font-weight: normal; /* 폰트를 굵게 하지 않습니다. */
+}
+
+.checkbox-container button {
+    margin-left: 10px;
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+.shuttlecock-label {
+    position: absolute;
+    background-color: black;
+    color: white;
+    padding: 5px;
+    font-size: 12px; /* 선택된 텍스트의 폰트 크기 */
+    font-weight: normal; /* 선택된 텍스트의 폰트 굵기 */
+}
