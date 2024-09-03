@@ -19,19 +19,11 @@ body, html {
     align-items: center;
 }
 
-#right-panel {
-    flex: 1;
-    padding: 20px;
-    background-color: #ffffff;
-    border-left: 1px solid #ccc;
-    overflow-y: auto;
-}
-
 #court {
     position: relative;
     width: 80%;
     height: 80%;
-    background-image: url('Badminton_Court.svg');
+    background-image: url('../Badminton_Court.svg');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -94,13 +86,22 @@ body, html {
 }
 
 #shuttlecock-start {
-    background-image: url('shuttlecock_start.png');
+    background-image: url('../shuttlecock_start.png');
 }
 
 #shuttlecock-end {
-    background-image: url('shuttlecock_end.png');
+    background-image: url('../shuttlecock_end.png');
     opacity: 0.5;
     display: none;
+}
+
+/* 기존 CSS 유지 */
+
+#right-panel {
+    flex: 1;
+    padding: 20px;
+    background-color: #ffffff;
+    border-left: 1px solid #ccc;
 }
 
 #content-display {
@@ -135,6 +136,34 @@ body, html {
 
 #editor-form button:hover {
     background-color: #45a049;
+}
+
+/* 콘텐츠 스타일 추가 */
+.content-item {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 20px;
+}
+
+.content-item img {
+    width: 500px;
+    height: auto;
+}
+
+.content-item .text {
+    margin-top: 10px;
+}
+
+.content-item .hashtags {
+    margin-top: 10px;
+}
+
+.content-item hr {
+    margin-top: 20px;
+    border: 0;
+    border-top: 1px solid #ccc;
 }
 
 .video-thumbnail {

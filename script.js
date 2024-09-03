@@ -51,14 +51,11 @@ function dragEnd() {
     document.removeEventListener('mousemove', drag);
     document.removeEventListener('mouseup', dragEnd);
 
-    if (selectedElement) {
-        if (selectedElement.id === 'shuttlecock-start') {
-            positionShuttlecockEnd();
-        } else if (selectedElement.id === 'shuttlecock-end') {
-            // 필요에 따라 추가 작업
-        }
-        
-        checkState();
+    if (selectedElement && selectedElement.id === 'shuttlecock-start') {
+        // shuttlecock-start가 드래그된 후 shuttlecock-end 표시
+        positionShuttlecockEnd();
+    } else if (selectedElement && selectedElement.id === 'shuttlecock-end') {
+        // shuttlecock-end가 드래그된 후 체크박스 표시
     }
 
     selectedElement = null;
@@ -153,32 +150,47 @@ function displayNoContentMessage() {
     contentDisplay.innerHTML = '<p>No content available for this state. Click "Edit Content" to add.</p>';
 }
 
-document.getElementById('edit-content-button').addEventListener('click', function () {
-    document.getElementById('editor-form').style.display = 'block';
-});
+document.getElementById('save-content-button').addEventListener('click', function() {
+    const text = document.getElementById('content-text').value.trim();
+    const videoUrl = document.getElementById('video-url').value.trim();
+    const hashtag = document.getElementById('hashtag-input').value.trim();
 
-document.getElementById('save-content-button').addEventListener('click', function () {
-    const state = getCurrentState();
-    const textContent = document.getElementById('content-text').value;
-    const videoUrl = document.getElementById('video-url').value;
-    const hashtag = document.getElementById('hashtag-input').value;
+    const contentDisplay = document.getElementById('content-display');
+    const contentItem = document.createElement('div');
+    contentItem.classList.add('content-item');
 
-    if (textContent) {
-        stateContentMap[state] = { type: 'text', data: textContent };
-    } else if (videoUrl) {
-        const videoId = extractVideoId(videoUrl);
+    if (videoUrl) {
+        const videoId = extractYouTubeVideoId(videoUrl);
         if (videoId) {
-            stateContentMap[state] = { type: 'video', data: videoId };
-        } else {
-            alert('Invalid YouTube URL');
+            const videoFrame = document.createElement('iframe');
+            videoFrame.width = '500';
+            videoFrame.height = '281'; // 16:9 aspect ratio
+            videoFrame.src = `https://www.youtube.com/embed/${videoId}`;
+            videoFrame.frameBorder = '0';
+            videoFrame.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+            videoFrame.allowFullscreen = true;
+            contentItem.appendChild(videoFrame);
         }
-    } else if (hashtag) {
-        stateContentMap[state] = { type: 'hashtag', data: hashtag };
     }
 
-    document.getElementById('editor-form').style.display = 'none';
-    checkState();
-});
+    if (text) {
+        const textElement = document.createElement('div');
+        textElement.classList.add('text');
+        textElement.textContent = text;
+        contentItem.appendChild(textElement);
+    }
+
+    if (hashtag) {
+        const hashtagElement = document.createElement('div');
+        hashtagElement.classList.add('hashtags');
+        hashtagElement.textContent = hashtag;
+        contentItem.appendChild(hashtagElement);
+    }
+
+    contentDisplay.appendChild(contentItem);
+
+    // Add horizontal line
+    const horizontalLine = document.createElement('hr');
 
 function extractVideoId(url) {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
