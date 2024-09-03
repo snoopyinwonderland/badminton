@@ -96,6 +96,11 @@ body, html {
 }
 
 #content-display {
+    min-height: 200px;
+    margin-bottom: 20px;
+}
+
+#matching-contents {
     margin-bottom: 20px;
 }
 
@@ -126,6 +131,15 @@ body, html {
 
 #editor-form button:hover {
     background-color: #45a049;
+}
+
+.text {
+    margin-top: 10px;
+}
+
+.hashtags {
+    margin-top: 5px;
+    color: #555;
 }
 
 .video-thumbnail {

@@ -10,6 +10,7 @@
     <div id="container">
         <div id="left-panel">
             <div id="court">
+                <!-- 모드 선택 버튼 -->
                 <div id="mode-selection">
                     <label>
                         <input type="radio" name="mode" value="singles" checked> Singles
@@ -18,6 +19,8 @@
                         <input type="radio" name="mode" value="doubles"> Doubles
                     </label>
                 </div>
+
+                <!-- 플레이어 및 셔틀콕 -->
                 <div class="player yellow-player" id="yellow1" style="left: 250px; top: 5px;"></div>
                 <div class="player yellow-player" id="yellow2" style="left: 280px; top: 5px; display: none;"></div>
                 <div class="player red-player" id="red1" style="left: 390px; top: 5px;"></div>
@@ -26,12 +29,11 @@
                 <div id="shuttlecock-end" style="display: none;"></div>
             </div>
         </div>
+
         <div id="right-panel">
             <div id="content-display">
-                <h3>Matching Contents</h3>
                 <div id="matching-contents"></div>
                 <hr>
-                <h3>Entire Contents</h3>
                 <div id="entire-contents"></div>
             </div>
             <div id="editor">

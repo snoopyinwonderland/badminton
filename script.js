@@ -1,12 +1,12 @@
-document.querySelectorAll('.player, #shuttlecock-start, #shuttlecock-end').forEach(item => {
-    item.addEventListener('mousedown', dragStart);
-});
-
 let selectedElement = null;
 let offsetX = 0;
 let offsetY = 0;
 let stateContentMap = {};
-let entireContentList = [];
+
+document.querySelectorAll('.player, #shuttlecock-start, #shuttlecock-end').forEach(item => {
+    item.addEventListener('mousedown', dragStart);
+});
+
 
 function updatePlayerVisibility() {
     const mode = document.querySelector('input[name="mode"]:checked').value;
@@ -100,12 +100,38 @@ function getCurrentState() {
     };
 }
 
+function checkState() {
+    let key = '';
+
+    document.querySelectorAll('.player').forEach(player => {
+        key += player.style.left + player.style.top + '-';
+    });
+
+    key += document.getElementById('shuttlecock-start').style.left + document.getElementById('shuttlecock-start').style.top;
+
+    if (stateContentMap[key]) {
+        displayMatchingContent(stateContentMap[key]);
+    } else {
+        document.getElementById('matching-contents').innerHTML = '<p>No matching contents found.</p>';
+    }
+}
+
 function setState(state) {
     for (const id in state) {
         const element = document.getElementById(id);
         element.style.left = state[id].left;
         element.style.top = state[id].top;
     }
+}
+
+function displayMatchingContent(content) {
+    const matchingContents = document.getElementById('matching-contents');
+    matchingContents.innerHTML = '';
+    content.forEach(item => {
+        const contentDiv = document.createElement('div');
+        contentDiv.innerHTML = `<img src="${item.thumbnail}" class="video-thumbnail"><div class="text">${item.text}</div><div class="hashtags">${item.hashtag}</div>`;
+        matchingContents.appendChild(contentDiv);
+    });
 }
 
 function saveContent() {
@@ -132,6 +158,11 @@ function saveContent() {
 
     updateContentDisplay();
 }
+
+document.getElementById('edit-content-button').addEventListener('click', () => {
+    const form = document.getElementById('editor-form');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+});
 
 document.getElementById('save-content-button').addEventListener('click', saveContent);
 
@@ -162,56 +193,50 @@ function updateContentDisplay() {
     }
 }
 
-function createContentDiv(contentData, contentId) {
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'content-item';
+document.getElementById('save-content-button').addEventListener('click', () => {
+    const contentText = document.getElementById('content-text').value;
+    const videoUrl = document.getElementById('video-url').value;
+    const hashtag = document.getElementById('hashtag-input').value;
+    const thumbnail = `http://img.youtube.com/vi/${extractVideoId(videoUrl)}/0.jpg`;
 
-    if (contentData.videoUrl) {
-        const videoFrame = document.createElement('iframe');
-        videoFrame.src = `https://www.youtube.com/embed/${getYouTubeVideoId(contentData.videoUrl)}`;
-        videoFrame.className = 'youtube-player';
-        contentDiv.appendChild(videoFrame);
+    const key = getCurrentStateKey();
+
+    if (!stateContentMap[key]) {
+        stateContentMap[key] = [];
     }
 
-    if (contentData.contentText) {
-        const textParagraph = document.createElement('p');
-        textParagraph.textContent = contentData.contentText;
-        contentDiv.appendChild(textParagraph);
-    }
+    stateContentMap[key].unshift({ text: contentText, thumbnail: thumbnail, hashtag: hashtag });
 
-    if (contentData.hashtag) {
-        const hashtagParagraph = document.createElement('p');
-        hashtagParagraph.textContent = contentData.hashtag;
-        contentDiv.appendChild(hashtagParagraph);
-    }
+    updateEntireContents();
+    checkState();
+});
 
-    contentDiv.addEventListener('click', () => {
-        setState(contentData.state);
-    });
-
-    return contentDiv;
+function extractVideoId(url) {
+    const regExp = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|(?:youtu\.be\/))([^&\n?#]+)/;
+    const match = url.match(regExp);
+    return match && match[1] ? match[1] : null;
 }
 
-function getYouTubeVideoId(url) {
-    const regex = /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&]+)|(?:https?:\/\/)?(?:www\.)?youtu\.be\/([^&]+)/;
-    const match = url.match(regex);
-    return match ? match[1] || match[2] : null;
-}
-
-function checkState() {
-    const currentState = getCurrentState();
-    let stateFound = false;
-
-    entireContentList.forEach(contentId => {
-        const contentData = stateContentMap[contentId];
-
-        if (JSON.stringify(contentData.state) === JSON.stringify(currentState)) {
-            stateFound = true;
-            updateContentDisplay();
-        }
+function getCurrentStateKey() {
+    let key = '';
+    document.querySelectorAll('.player').forEach(player => {
+        key += player.style.left + player.style.top + '-';
     });
 
-    if (!stateFound) {
-        updateContentDisplay();
-    }
+    key += document.getElementById('shuttlecock-start').style.left + document.getElementById('shuttlecock-start').style.top;
+
+    return key;
+}
+
+function updateEntireContents() {
+    const entireContents = document.getElementById('entire-contents');
+    entireContents.innerHTML = '';
+    const allContents = Object.values(stateContentMap).flat();
+    allContents.sort(() => Math.random() - 0.5);  // Randomize content order
+
+    allContents.forEach(item => {
+        const contentDiv = document.createElement('div');
+        contentDiv.innerHTML = `<img src="${item.thumbnail}" class="video-thumbnail"><div class="text">${item.text}</div><div class="hashtags">${item.hashtag}</div>`;
+        entireContents.appendChild(contentDiv);
+    });
 }
