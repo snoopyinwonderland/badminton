@@ -58,19 +58,11 @@ body, html {
     border: 3px solid yellow;
 }
 
-#yellow1 {
+#yellow1, #red1 {
     background-color: black;
 }
 
-#red1 {
-    background-color: black;
-}
-
-#yellow2 {
-    background-color: gray;
-}
-
-#red2 {
+#yellow2, #red2 {
     background-color: gray;
 }
 
@@ -95,17 +87,15 @@ body, html {
     display: none;
 }
 
-/* 기존 CSS 유지 */
-
 #right-panel {
     flex: 1;
     padding: 20px;
     background-color: #ffffff;
     border-left: 1px solid #ccc;
+    overflow-y: auto;
 }
 
 #content-display {
-    min-height: 200px;
     margin-bottom: 20px;
 }
 
@@ -138,44 +128,16 @@ body, html {
     background-color: #45a049;
 }
 
-/* 콘텐츠 스타일 추가 */
-.content-item {
-    display: flex;
-    flex-direction: column;
-    border: 1px solid #ddd;
-    padding: 10px;
-    margin-bottom: 20px;
-}
-
-.content-item img {
-    width: 500px;
-    height: auto;
-}
-
-.content-item .text {
-    margin-top: 10px;
-}
-
-.content-item .hashtags {
-    margin-top: 10px;
-}
-
-.content-item hr {
-    margin-top: 20px;
-    border: 0;
-    border-top: 1px solid #ccc;
-}
-
 .video-thumbnail {
     width: 100%;
-    max-width: 560px;
+    max-width: 500px;
     cursor: pointer;
 }
 
 .youtube-player {
     width: 100%;
-    max-width: 560px;
-    height: 315px;
+    max-width: 500px;
+    height: 281px; /* 16:9 aspect ratio */
     border: none;
 }
 

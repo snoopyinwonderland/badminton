@@ -6,8 +6,8 @@ let selectedElement = null;
 let offsetX = 0;
 let offsetY = 0;
 let stateContentMap = {};
+let entireContentList = [];
 
-// 복식 모드와 관련된 플레이어를 표시합니다
 function updatePlayerVisibility() {
     const mode = document.querySelector('input[name="mode"]:checked').value;
     const isDoubles = mode === 'doubles';
@@ -20,7 +20,7 @@ document.querySelectorAll('input[name="mode"]').forEach(radio => {
     radio.addEventListener('change', updatePlayerVisibility);
 });
 
-updatePlayerVisibility(); // 초기 상태 설정
+updatePlayerVisibility();
 
 function dragStart(e) {
     e.preventDefault();
@@ -51,14 +51,13 @@ function dragEnd() {
     document.removeEventListener('mousemove', drag);
     document.removeEventListener('mouseup', dragEnd);
 
+    // 드래그가 끝났을 때 드래그 중인 요소가 shuttlecock-start일 경우에만 위치를 설정합니다.
     if (selectedElement && selectedElement.id === 'shuttlecock-start') {
-        // shuttlecock-start가 드래그된 후 shuttlecock-end 표시
         positionShuttlecockEnd();
-    } else if (selectedElement && selectedElement.id === 'shuttlecock-end') {
-        // shuttlecock-end가 드래그된 후 체크박스 표시
     }
 
     selectedElement = null;
+    checkState();
 }
 
 function positionShuttlecockEnd() {
@@ -83,15 +82,6 @@ function positionShuttlecockEnd() {
     shuttleEnd.style.display = 'block';
 }
 
-function checkState() {
-    const state = getCurrentState();
-    if (stateContentMap[state]) {
-        displayContent(stateContentMap[state]);
-    } else {
-        displayNoContentMessage();
-    }
-}
-
 function getCurrentState() {
     const yellow1 = document.getElementById('yellow1');
     const yellow2 = document.getElementById('yellow2');
@@ -100,100 +90,128 @@ function getCurrentState() {
     const shuttlecockStart = document.getElementById('shuttlecock-start');
     const shuttlecockEnd = document.getElementById('shuttlecock-end');
 
-    return JSON.stringify({
+    return {
         yellow1: { left: yellow1.style.left, top: yellow1.style.top },
         yellow2: { left: yellow2.style.left, top: yellow2.style.top },
         red1: { left: red1.style.left, top: red1.style.top },
         red2: { left: red2.style.left, top: red2.style.top },
         shuttlecockStart: { left: shuttlecockStart.style.left, top: shuttlecockStart.style.top },
         shuttlecockEnd: { left: shuttlecockEnd.style.left, top: shuttlecockEnd.style.top }
-    });
+    };
 }
 
-function displayContent(content) {
-    const contentDisplay = document.getElementById('content-display');
-    contentDisplay.innerHTML = ''; // Clear previous content
-
-    if (content.type === 'text') {
-        const textElement = document.createElement('p');
-        textElement.textContent = content.data;
-        contentDisplay.appendChild(textElement);
-    } else if (content.type === 'video') {
-        const thumbnail = document.createElement('img');
-        thumbnail.src = `https://img.youtube.com/vi/${content.data}/hqdefault.jpg`;
-        thumbnail.className = 'video-thumbnail';
-        thumbnail.style.cursor = 'pointer';
-        thumbnail.addEventListener('click', () => showVideo(content.data));
-
-        contentDisplay.appendChild(thumbnail);
-    } else if (content.type === 'hashtag') {
-        const hashtagElement = document.createElement('p');
-        hashtagElement.textContent = content.data;
-        contentDisplay.appendChild(hashtagElement);
+function setState(state) {
+    for (const id in state) {
+        const element = document.getElementById(id);
+        element.style.left = state[id].left;
+        element.style.top = state[id].top;
     }
 }
 
-function showVideo(videoId) {
-    const contentDisplay = document.getElementById('content-display');
-    contentDisplay.innerHTML = ''; // Clear previous content
-
-    const iframe = document.createElement('iframe');
-    iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-    iframe.className = 'youtube-player';
-    iframe.width = '560';
-    iframe.height = '315';
-    contentDisplay.appendChild(iframe);
-}
-
-function displayNoContentMessage() {
-    const contentDisplay = document.getElementById('content-display');
-    contentDisplay.innerHTML = '<p>No content available for this state. Click "Edit Content" to add.</p>';
-}
-
-document.getElementById('save-content-button').addEventListener('click', function() {
-    const text = document.getElementById('content-text').value.trim();
+function saveContent() {
+    const contentText = document.getElementById('content-text').value.trim();
     const videoUrl = document.getElementById('video-url').value.trim();
     const hashtag = document.getElementById('hashtag-input').value.trim();
 
-    const contentDisplay = document.getElementById('content-display');
-    const contentItem = document.createElement('div');
-    contentItem.classList.add('content-item');
+    if (!contentText && !videoUrl && !hashtag) {
+        alert('Please enter at least one of content, video URL, or hashtag.');
+        return;
+    }
 
-    if (videoUrl) {
-        const videoId = extractYouTubeVideoId(videoUrl);
-        if (videoId) {
-            const videoFrame = document.createElement('iframe');
-            videoFrame.width = '500';
-            videoFrame.height = '281'; // 16:9 aspect ratio
-            videoFrame.src = `https://www.youtube.com/embed/${videoId}`;
-            videoFrame.frameBorder = '0';
-            videoFrame.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-            videoFrame.allowFullscreen = true;
-            contentItem.appendChild(videoFrame);
+    const state = getCurrentState();
+    const contentData = {
+        contentText,
+        videoUrl,
+        hashtag,
+        state
+    };
+
+    const contentId = Date.now();
+    stateContentMap[contentId] = contentData;
+    entireContentList.push(contentId);
+
+    updateContentDisplay();
+}
+
+document.getElementById('save-content-button').addEventListener('click', saveContent);
+
+function updateContentDisplay() {
+    const matchingContentsDiv = document.getElementById('matching-contents');
+    const entireContentsDiv = document.getElementById('entire-contents');
+    
+    matchingContentsDiv.innerHTML = '';
+    entireContentsDiv.innerHTML = '';
+
+    const currentState = getCurrentState();
+    let matchingContentFound = false;
+
+    entireContentList.forEach(contentId => {
+        const contentData = stateContentMap[contentId];
+        const contentDiv = createContentDiv(contentData, contentId);
+
+        if (JSON.stringify(contentData.state) === JSON.stringify(currentState)) {
+            matchingContentsDiv.appendChild(contentDiv);
+            matchingContentFound = true;
         }
+
+        entireContentsDiv.appendChild(contentDiv);
+    });
+
+    if (!matchingContentFound) {
+        matchingContentsDiv.innerHTML = '<p>No matching content found for the current configuration.</p>';
+    }
+}
+
+function createContentDiv(contentData, contentId) {
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'content-item';
+
+    if (contentData.videoUrl) {
+        const videoFrame = document.createElement('iframe');
+        videoFrame.src = `https://www.youtube.com/embed/${getYouTubeVideoId(contentData.videoUrl)}`;
+        videoFrame.className = 'youtube-player';
+        contentDiv.appendChild(videoFrame);
     }
 
-    if (text) {
-        const textElement = document.createElement('div');
-        textElement.classList.add('text');
-        textElement.textContent = text;
-        contentItem.appendChild(textElement);
+    if (contentData.contentText) {
+        const textParagraph = document.createElement('p');
+        textParagraph.textContent = contentData.contentText;
+        contentDiv.appendChild(textParagraph);
     }
 
-    if (hashtag) {
-        const hashtagElement = document.createElement('div');
-        hashtagElement.classList.add('hashtags');
-        hashtagElement.textContent = hashtag;
-        contentItem.appendChild(hashtagElement);
+    if (contentData.hashtag) {
+        const hashtagParagraph = document.createElement('p');
+        hashtagParagraph.textContent = contentData.hashtag;
+        contentDiv.appendChild(hashtagParagraph);
     }
 
-    contentDisplay.appendChild(contentItem);
+    contentDiv.addEventListener('click', () => {
+        setState(contentData.state);
+    });
 
-    // Add horizontal line
-    const horizontalLine = document.createElement('hr');
+    return contentDiv;
+}
 
-function extractVideoId(url) {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length == 11) ? match[2] : null;
+function getYouTubeVideoId(url) {
+    const regex = /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&]+)|(?:https?:\/\/)?(?:www\.)?youtu\.be\/([^&]+)/;
+    const match = url.match(regex);
+    return match ? match[1] || match[2] : null;
+}
+
+function checkState() {
+    const currentState = getCurrentState();
+    let stateFound = false;
+
+    entireContentList.forEach(contentId => {
+        const contentData = stateContentMap[contentId];
+
+        if (JSON.stringify(contentData.state) === JSON.stringify(currentState)) {
+            stateFound = true;
+            updateContentDisplay();
+        }
+    });
+
+    if (!stateFound) {
+        updateContentDisplay();
+    }
 }
