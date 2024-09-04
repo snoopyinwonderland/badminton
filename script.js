@@ -20,39 +20,6 @@ document.querySelectorAll('.player').forEach(player => {
 });
 */
 
-// 기존 Edit Content 버튼을 최상단으로 이동
-document.addEventListener('DOMContentLoaded', function() {
-    // Move Edit Content button to the top of the right panel
-    const editorForm = document.getElementById('editor-form');
-    const rightPanel = document.getElementById('right-panel');
-    const editContentButton = document.getElementById('edit-content-button');
-    
-    if (editorForm && rightPanel && editContentButton) {
-        rightPanel.insertBefore(editContentButton, rightPanel.firstChild);
-    }
-
-    // Attach event listeners to Edit and Delete buttons
-    document.querySelectorAll('.edit-button, .delete-button').forEach(button => {
-        button.addEventListener('click', (event) => {
-            const actionType = event.target.classList.contains('edit-button') ? 'edit' : 'delete';
-            const password = prompt('Please enter the password:');
-            
-            if (password === 'song') {
-                const key = event.target.getAttribute('data-key');
-                const index = parseInt(event.target.getAttribute('data-index'), 10);
-                
-                if (actionType === 'edit') {
-                    editContent(key, index);
-                } else if (actionType === 'delete') {
-                    deleteContent(key, index);
-                }
-            } else {
-                alert('Incorrect password.');
-            }
-        });
-    });
-});
-
 function updatePlayerVisibility() {
     const mode = document.querySelector('input[name="mode"]:checked').value;
     const isDoubles = mode === 'doubles';
@@ -150,44 +117,17 @@ function checkState() {
     }
 }
 
-// Matching Content의 YouTube 영상 크기를 50% 키움
 function displayMatchingContent(content) {
     const matchingContents = document.getElementById('matching-contents');
     matchingContents.innerHTML = '';
     content.forEach(item => {
         const contentDiv = document.createElement('div');
-        contentDiv.classList.add('content-item');
-
         contentDiv.innerHTML = `
-            <div class="text">${item.text}</div>
             <iframe width="600" height="337.5" src="https://www.youtube.com/embed/${item.videoId}?start=${item.startTime}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <div class="hashtags">${item.hashtags.map(tag => `<a href="#" class="hashtag-link">${tag}</a>`).join(', ')}</div>
-            <button class="view-position-button" onclick="viewPosition('${item.key}')">View Position</button>
-            <button class="edit-button" data-key="${item.key}" data-index="${content.indexOf(item)}">Edit</button>
-            <button class="delete-button" data-key="${item.key}" data-index="${content.indexOf(item)}">Delete</button>`;
-        
+            <div class="text">${item.text}</div>
+            <div class="hashtags">${item.hashtags.join(', ')}</div>
+            <button class="view-position-button" onclick="viewPosition('${item.key}')">View Position</button>`;
         matchingContents.appendChild(contentDiv);
-    });
-
-    // Re-attach event listeners for edit and delete buttons after rendering
-    document.querySelectorAll('.edit-button, .delete-button').forEach(button => {
-        button.addEventListener('click', (event) => {
-            const actionType = event.target.classList.contains('edit-button') ? 'edit' : 'delete';
-            const password = prompt('Please enter the password:');
-            
-            if (password === 'song') {
-                const key = event.target.getAttribute('data-key');
-                const index = parseInt(event.target.getAttribute('data-index'), 10);
-                
-                if (actionType === 'edit') {
-                    editContent(key, index);
-                } else if (actionType === 'delete') {
-                    deleteContent(key, index);
-                }
-            } else {
-                alert('Incorrect password.');
-            }
-        });
     });
 }
 
@@ -196,63 +136,81 @@ document.getElementById('edit-content-button').addEventListener('click', () => {
     form.style.display = form.style.display === 'none' ? 'block' : 'none';
 });
 
-// 수정 시 저장 버튼 클릭 리스너 추가
 document.getElementById('save-content-button').addEventListener('click', () => {
-    const key = document.getElementById('edit-key').value;
-    const index = document.getElementById('edit-index').value;
+    const contentText = document.getElementById('content-text').value.trim();
+    const videoUrl = document.getElementById('video-url').value.trim();
+    const hashtags = document.getElementById('hashtag-input').value.split(',').map(tag => tag.trim());
+    const videoId = extractVideoId(videoUrl);
+    const startTime = extractStartTime(videoUrl);
 
-    if (key && index !== '') {
-        stateContentMap[key][index] = {
-            text: document.getElementById('content-text').value,
-            videoId: extractVideoId(document.getElementById('video-url').value),
-            startTime: extractStartTime(document.getElementById('video-url').value),
-            hashtags: document.getElementById('hashtag-input').value.split(',').map(tag => tag.trim()),
-            key: key,
-            positions: stateContentMap[key][index].positions
-        };
-    } else {
-        // 새 콘텐츠 추가 시
-        const contentText = document.getElementById('content-text').value;
-        const videoUrl = document.getElementById('video-url').value;
-        const hashtags = document.getElementById('hashtag-input').value.split(',').map(tag => tag.trim());
-        const videoId = extractVideoId(videoUrl);
-        const startTime = extractStartTime(videoUrl);
-        const key = getCurrentStateKey();
+    const key = getCurrentStateKey();
 
-        if (!stateContentMap[key]) {
-            stateContentMap[key] = [];
-        }
+    if (!stateContentMap[key]) {
+        stateContentMap[key] = [];
+    }
 
-        const positions = [];
-        document.querySelectorAll('.player').forEach(player => {
-            if (player.id) {
-                positions.push({
+    // 현재 모드 확인
+    const mode = document.querySelector('input[name="mode"]:checked').value;
+
+    // Save positions with ids
+    const positions = [];
+
+    if (mode === 'singles') {
+        // 싱글스 모드에서는 yellow1과 red1만 저장
+        ['yellow1', 'red1'].forEach(id => {
+            const player = document.getElementById(id);
+            if (player) {
+                const playerPosition = {
                     id: player.id,
                     x: parseInt(player.style.left, 10),
                     y: parseInt(player.style.top, 10)
-                });
+                };
+                positions.push(playerPosition);
+                console.log(`Saving position for ${player.id}: (${playerPosition.x}, ${playerPosition.y})`);
             }
         });
-
-        stateContentMap[key].unshift({
-            text: contentText,
-            videoId: videoId,
-            startTime: startTime,
-            hashtags: hashtags,
-            key: key,
-            positions: positions
+    } else if (mode === 'doubles') {
+        // 복식 모드에서는 모든 플레이어 저장
+        document.querySelectorAll('.player').forEach(player => {
+            if (player.id) {
+                const playerPosition = {
+                    id: player.id,
+                    x: parseInt(player.style.left, 10),
+                    y: parseInt(player.style.top, 10)
+                };
+                positions.push(playerPosition);
+                console.log(`Saving position for ${player.id}: (${playerPosition.x}, ${playerPosition.y})`);
+            }
         });
     }
 
-    saveStateContentMap();
-    updateEntireContents();
-    checkState();
+    // 셔틀콕 위치 저장
+    const shuttlecockStart = {
+        x: parseInt(document.getElementById('shuttlecock-start').style.left, 10),
+        y: parseInt(document.getElementById('shuttlecock-start').style.top, 10)
+    };
+    const shuttlecockEnd = {
+        x: parseInt(document.getElementById('shuttlecock-end').style.left, 10),
+        y: parseInt(document.getElementById('shuttlecock-end').style.top, 10)
+    };
 
-    // 폼 초기화 및 숨기기
-    document.getElementById('editor-form').reset();
-    document.getElementById('editor-form').style.display = 'none';
-    document.getElementById('edit-key').value = '';
-    document.getElementById('edit-index').value = '';
+    console.log("Saving shuttlecock positions:", shuttlecockStart, shuttlecockEnd);
+
+    // 콘텐츠 데이터에 저장
+    stateContentMap[key].unshift({
+        text: contentText,
+        videoId: videoId,
+        startTime: startTime,
+        hashtags: hashtags,
+        key: key,
+        positions: positions,
+        shuttlecockStart: shuttlecockStart,
+        shuttlecockEnd: shuttlecockEnd
+    });
+
+    saveStateContentMap(); // 로컬 스토리지에 저장
+    updateEntireContents(); // 전체 콘텐츠 목록 업데이트
+    checkState(); // 상태 확인
 });
 
 function extractVideoId(url) {
@@ -361,16 +319,11 @@ function updateEntireContents() {
 
     allContents.forEach(item => {
         const contentDiv = document.createElement('div');
-        contentDiv.classList.add('content-item-small');
-
         contentDiv.innerHTML = `
+            <iframe width="400" height="225" src="https://www.youtube.com/embed/${item.videoId}?start=${item.startTime}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <div class="text">${item.text}</div>
-            <iframe width="200" height="112.5" src="https://www.youtube.com/embed/${item.videoId}?start=${item.startTime}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <div class="hashtags">${item.hashtags.map(tag => `<a href="#" class="hashtag-link">${tag}</a>`).join(', ')}</div>
-            <button class="view-position-button" onclick="viewPosition('${item.key}')">View Position</button>
-            <button class="edit-button" onclick="editContent('${item.key}', ${allContents.indexOf(item)})">Edit</button>
-            <button class="delete-button" onclick="deleteContent('${item.key}', ${allContents.indexOf(item)})">Delete</button>`;
-        
+            <div class="hashtags">${item.hashtags.join(', ')}</div>
+            <button class="view-position-button" onclick="viewPosition('${item.key}')">View Position</button>`;
         entireContents.appendChild(contentDiv);
     });
 }
@@ -393,29 +346,3 @@ window.addEventListener('load', () => {
     updateEntireContents();
     checkState();
 });
-
-function editContent(key, index) {
-    const item = stateContentMap[key][index];
-    if (item) {
-        document.getElementById('content-text').value = item.text;
-        document.getElementById('video-url').value = `https://www.youtube.com/watch?v=${item.videoId}&t=${item.startTime}`;
-        document.getElementById('hashtag-input').value = item.hashtags.join(', ');
-        document.getElementById('edit-key').value = key;
-        document.getElementById('edit-index').value = index;
-
-        // Automatically show the edit form
-        document.getElementById('editor-form').style.display = 'block';
-    }
-}
-
-function deleteContent(key, index) {
-    if (confirm('Are you sure you want to delete this content?')) {
-        stateContentMap[key].splice(index, 1);
-        if (stateContentMap[key].length === 0) {
-            delete stateContentMap[key];
-        }
-        saveStateContentMap();
-        updateEntireContents();
-        checkState();
-    }
-}
