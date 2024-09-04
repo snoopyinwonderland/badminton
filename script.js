@@ -120,13 +120,17 @@ function checkState() {
 function displayMatchingContent(content) {
     const matchingContents = document.getElementById('matching-contents');
     matchingContents.innerHTML = '';
-    content.forEach(item => {
+    content.forEach((item, index) => {
         const contentDiv = document.createElement('div');
         contentDiv.innerHTML = `
-            <iframe width="600" height="337.5" src="https://www.youtube.com/embed/${item.videoId}?start=${item.startTime}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <div class="text">${item.text}</div>
+            <iframe width="600" height="337.5" src="https://www.youtube.com/embed/${item.videoId}?start=${item.startTime}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <div class="hashtags">${item.hashtags.join(', ')}</div>
-            <button class="view-position-button" onclick="viewPosition('${item.key}')">View Position</button>`;
+            <div class="edit-delete-buttons">
+                <button class="view-position-button" onclick="viewPosition('${item.key}')">View Position</button>
+                <button class="edit-button" onclick="editContent('${item.key}', ${index})">Edit</button>
+                <button class="delete-button delete" onclick="deleteContent('${item.key}', ${index})">Delete</button>
+            </div>`;
         matchingContents.appendChild(contentDiv);
     });
 }
@@ -320,12 +324,65 @@ function updateEntireContents() {
     allContents.forEach(item => {
         const contentDiv = document.createElement('div');
         contentDiv.innerHTML = `
-            <iframe width="400" height="225" src="https://www.youtube.com/embed/${item.videoId}?start=${item.startTime}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <div class="text">${item.text}</div>
+            <iframe width="320" height="180" src="https://www.youtube.com/embed/${item.videoId}?start=${item.startTime}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <div class="hashtags">${item.hashtags.join(', ')}</div>
             <button class="view-position-button" onclick="viewPosition('${item.key}')">View Position</button>`;
         entireContents.appendChild(contentDiv);
     });
+}
+
+function editContent(key, index) {
+    const password = prompt("Enter password to edit:");
+    if (password === "song") {
+        const content = stateContentMap[key][index];
+        document.getElementById('content-text').value = content.text;
+        document.getElementById('video-url').value = `https://www.youtube.com/watch?v=${content.videoId}&t=${content.startTime}`;
+        document.getElementById('hashtag-input').value = content.hashtags.join(', ');
+        document.getElementById('editor-form').style.display = 'block';
+
+        document.getElementById('save-content-button').onclick = function() {
+            saveEditedContent(key, index);
+        };
+    } else {
+        alert("Incorrect password.");
+    }
+}
+
+function saveEditedContent(key, index) {
+    const contentText = document.getElementById('content-text').value.trim();
+    const videoUrl = document.getElementById('video-url').value.trim();
+    const hashtags = document.getElementById('hashtag-input').value.split(',').map(tag => tag.trim());
+    const videoId = extractVideoId(videoUrl);
+    const startTime = extractStartTime(videoUrl);
+
+    stateContentMap[key][index] = {
+        ...stateContentMap[key][index],
+        text: contentText,
+        videoId: videoId,
+        startTime: startTime,
+        hashtags: hashtags
+    };
+
+    saveStateContentMap();
+    updateEntireContents();
+    checkState();
+    document.getElementById('editor-form').style.display = 'none';
+}
+
+function deleteContent(key, index) {
+    const password = prompt("Enter password to delete:");
+    if (password === "song") {
+        stateContentMap[key].splice(index, 1);
+        if (stateContentMap[key].length === 0) {
+            delete stateContentMap[key];
+        }
+        saveStateContentMap();
+        updateEntireContents();
+        checkState();
+    } else {
+        alert("Incorrect password.");
+    }
 }
 
 function saveStateContentMap() {

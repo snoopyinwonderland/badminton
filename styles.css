@@ -100,8 +100,36 @@ body, html {
     margin-bottom: 20px;
 }
 
+/*
 #matching-contents {
     margin-bottom: 20px;
+}
+*/
+
+#matching-contents {
+    width: 100%;
+    height: 66%;
+    overflow-y: auto;
+    margin-bottom: 10px;
+}
+
+#entire-contents {
+    width: 100%;
+    height: 33%;
+    overflow-y: auto;
+}
+
+.content-item {
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    padding: 10px;
+}
+
+.content-item-small {
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    padding: 10px;
+    width: 48%;
 }
 
 #editor {
@@ -111,6 +139,7 @@ body, html {
 #editor-form {
     margin-top: 20px;
     style="display: none;
+    margin-bottom: 20px;
 }
 
 #editor-form textarea, #editor-form input {
@@ -123,7 +152,7 @@ body, html {
 
 #editor-form button {
     padding: 10px 20px;
-    background-color: #4CAF50;
+    background-color: #2f09b5;
     color: white;
     border: none;
     border-radius: 5px;
@@ -131,16 +160,35 @@ body, html {
 }
 
 #editor-form button:hover {
-    background-color: #45a049;
+    background-color: #2f09b5;
 }
 
 .text {
-    margin-top: 10px;
+    font-size: 13px;
+    font-weight: bold; /* 글자 굵게 설정 */
+    font-family: 'Nanum Gothic', sans-serif; /* 나눔고딕 폰트 사용 */
+    margin-bottom: 8px;
 }
 
-.hashtags {
-    margin-top: 5px;
-    color: #555;
+.hashtag-link {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 12px;
+    font-family: 'Raleway', sans-serif; /* Hashtag 폰트를 Raleway로 설정 */
+}
+
+.hashtag-link:hover {
+    text-decoration: underline;
+}
+
+.iframe-container {
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.buttons-container {
+    display: flex;
+    justify-content: space-between;
 }
 
 .video-thumbnail {
@@ -181,4 +229,35 @@ body, html {
     padding: 5px;
     font-size: 12px; /* 선택된 텍스트의 폰트 크기 */
     font-weight: normal; /* 선택된 텍스트의 폰트 굵기 */
+}
+
+.buttons-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+.edit-delete-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+button {
+    padding: 5px 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+button.delete {
+    background-color: #f44336;
+}
+
+button.delete:hover {
+    background-color: #e41f1f;
 }
