@@ -117,6 +117,12 @@ function checkState() {
     }
 }
 
+function generateRandomKey() {
+    const array = new Uint32Array(4);
+    window.crypto.getRandomValues(array);
+    return Array.from(array, dec => dec.toString(36)).join('');
+}
+
 function displayMatchingContent(content) {
     const matchingContents = document.getElementById('matching-contents');
     matchingContents.innerHTML = '';
@@ -148,7 +154,7 @@ document.getElementById('save-content-button').addEventListener('click', () => {
     const videoId = extractVideoId(videoUrl);
     const startTime = extractStartTime(videoUrl);
 
-    const key = getCurrentStateKey();
+    const key = generateRandomKey(); // 난수화된 key 생성
 
     // 현재 모드 확인
     const mode = document.querySelector('input[name="mode"]:checked').value;
@@ -202,11 +208,13 @@ document.getElementById('save-content-button').addEventListener('click', () => {
         shuttlecockEnd: shuttlecockEnd
     }];
 
+    /*
     // stateContentMap 업데이트
     if (!stateContentMap[key]) {
         stateContentMap[key] = [];
     }
     stateContentMap[key].push(newContent);
+    */
 
     saveStateContentMap(); // 로컬 스토리지에 저장
     updateEntireContents(); // 전체 콘텐츠 목록 업데이트
@@ -230,7 +238,18 @@ function viewPosition(key) {
     console.log("StateContent for key:", contents); // 디버깅 메시지
 
     if (contents && contents.length > 0) {
+        // URL을 현재 창에서 변경 (history.pushState를 사용)
+        window.history.pushState(null, '', `?key=${key}`);
+
         const firstContent = contents[0]; // 첫 번째 콘텐츠를 기반으로 모드 전환
+                
+        // 현재 상태 URL을 key를 사용하여 생성
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('key', key);
+        
+        // URL을 새 창으로 열도록 설정
+        // window.open(currentUrl.toString(), '_blank');
+
         const mode = firstContent.key.includes('singles') ? 'singles' : 'doubles';
 
         // 모드 변경
@@ -354,10 +373,15 @@ function saveEditedContent(key, index) {
 
     stateContentMap[key][index] = {
         ...stateContentMap[key][index],
-        text: contentText,
-        videoId: videoId,
-        startTime: startTime,
-        hashtags: hashtags
+        text: updatedText,
+        videoId: updatedVideoId,
+        startTime: updatedStartTime,
+        hashtags: updatedHashtags,
+        key: key,
+        timestamp: new Date().toISOString(),
+        positions: stateContentMap[key][index].positions,
+        shuttlecockStart: stateContentMap[key][index].shuttlecockStart,
+        shuttlecockEnd: stateContentMap[key][index].shuttlecockEnd
     };
 
     saveStateContentMap();
@@ -393,12 +417,25 @@ function loadStateContentMap() {
     return parsedMap;
 }
 
+
 window.addEventListener('load', () => {
-    // Ensure that the map is loaded and matching contents are updated
-    stateContentMap = loadStateContentMap();
-    updateEntireContents();
-    checkState();
+    stateContentMap = loadStateContentMap(); // 로컬 저장소에서 상태 맵을 로드
+    updateEntireContents(); // 모든 콘텐츠 업데이트
+
+    // URL에서 key 파라미터를 가져와서 상태를 불러옴
+    const key = getContentKeyFromUrl();
+    if (key && stateContentMap[key]) {
+        viewPosition(key);  // 해당 키의 위치를 복원
+    } else {
+        checkState();  // URL에 키가 없으면 기본 상태 확인
+    }
 });
+
+// URL에서 key 값을 추출하는 함수
+function getContentKeyFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('key');
+}
 
 // Hashtag를 클릭하면 해당 Hashtag를 포함하는 콘텐츠를 필터링하여 최신순으로 나열
 function filterByHashtag(hashtag) {
@@ -445,3 +482,18 @@ document.querySelectorAll('.hashtag-link').forEach(hashtagLink => {
         filterByHashtag(hashtag);
     });
 });
+
+// URL에서 특정 키를 가져오는 함수
+function getContentKeyFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('key');
+}
+
+// 특정 키를 가진 콘텐츠를 불러오는 함수
+function loadContentFromUrl() {
+    const key = getContentKeyFromUrl();
+    if (key && stateContentMap[key]) {
+        displayMatchingContent(stateContentMap[key]);
+    }
+}
+
