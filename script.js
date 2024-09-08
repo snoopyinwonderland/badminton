@@ -149,41 +149,31 @@ document.getElementById('save-content-button').addEventListener('click', () => {
 
     const key = getCurrentStateKey();
 
-    if (!stateContentMap[key]) {
-        stateContentMap[key] = [];
-    }
-
     // 현재 모드 확인
     const mode = document.querySelector('input[name="mode"]:checked').value;
 
-    // Save positions with ids
+    // 플레이어 위치 저장
     const positions = [];
 
     if (mode === 'singles') {
-        // 싱글스 모드에서는 yellow1과 red1만 저장
         ['yellow1', 'red1'].forEach(id => {
             const player = document.getElementById(id);
             if (player) {
-                const playerPosition = {
+                positions.push({
                     id: player.id,
                     x: parseInt(player.style.left, 10),
                     y: parseInt(player.style.top, 10)
-                };
-                positions.push(playerPosition);
-                console.log(`Saving position for ${player.id}: (${playerPosition.x}, ${playerPosition.y})`);
+                });
             }
         });
     } else if (mode === 'doubles') {
-        // 복식 모드에서는 모든 플레이어 저장
         document.querySelectorAll('.player').forEach(player => {
             if (player.id) {
-                const playerPosition = {
+                positions.push({
                     id: player.id,
                     x: parseInt(player.style.left, 10),
                     y: parseInt(player.style.top, 10)
-                };
-                positions.push(playerPosition);
-                console.log(`Saving position for ${player.id}: (${playerPosition.x}, ${playerPosition.y})`);
+                });
             }
         });
     }
@@ -198,10 +188,8 @@ document.getElementById('save-content-button').addEventListener('click', () => {
         y: parseInt(document.getElementById('shuttlecock-end').style.top, 10)
     };
 
-    console.log("Saving shuttlecock positions:", shuttlecockStart, shuttlecockEnd);
-
-    // 콘텐츠 데이터에 저장
-    stateContentMap[key].unshift({
+    // 이전 데이터를 덮어쓰는 방식으로 업데이트
+    stateContentMap[key] = [{
         text: contentText,
         videoId: videoId,
         startTime: startTime,
@@ -210,7 +198,7 @@ document.getElementById('save-content-button').addEventListener('click', () => {
         positions: positions,
         shuttlecockStart: shuttlecockStart,
         shuttlecockEnd: shuttlecockEnd
-    });
+    }];
 
     saveStateContentMap(); // 로컬 스토리지에 저장
     updateEntireContents(); // 전체 콘텐츠 목록 업데이트
@@ -313,23 +301,6 @@ function getCurrentStateKey() {
     // 디버깅 메시지
     console.log("Generated key:", key);
     return key;
-}
-
-function updateEntireContents() {
-    const entireContents = document.getElementById('entire-contents');
-    entireContents.innerHTML = '';
-    const allContents = Object.values(stateContentMap).flat();
-    allContents.sort(() => Math.random() - 0.5);  // Randomize content order
-
-    allContents.forEach(item => {
-        const contentDiv = document.createElement('div');
-        contentDiv.innerHTML = `
-            <div class="text">${item.text}</div>
-            <iframe width="320" height="180" src="https://www.youtube.com/embed/${item.videoId}?start=${item.startTime}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <div class="hashtags">${item.hashtags.join(', ')}</div>
-            <button class="view-position-button" onclick="viewPosition('${item.key}')">View Position</button>`;
-        entireContents.appendChild(contentDiv);
-    });
 }
 
 function editContent(key, index) {
