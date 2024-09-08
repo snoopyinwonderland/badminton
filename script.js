@@ -122,10 +122,11 @@ function displayMatchingContent(content) {
     matchingContents.innerHTML = '';
     content.forEach((item, index) => {
         const contentDiv = document.createElement('div');
+        const hashtagsHtml = item.hashtags.map(tag => `<a href="#" class="hashtag-link" onclick="filterByHashtag('${tag}')">#${tag}</a>`).join(', ');
         contentDiv.innerHTML = `
             <div class="text">${item.text}</div>
             <iframe width="600" height="337.5" src="https://www.youtube.com/embed/${item.videoId}?start=${item.startTime}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <div class="hashtags">${item.hashtags.join(', ')}</div>
+            <div class="hashtags">${hashtagsHtml}</div>
             <div class="edit-delete-buttons">
                 <button class="view-position-button" onclick="viewPosition('${item.key}')">View Position</button>
                 <button class="edit-button" onclick="editContent('${item.key}', ${index})">Edit</button>
@@ -195,10 +196,17 @@ document.getElementById('save-content-button').addEventListener('click', () => {
         startTime: startTime,
         hashtags: hashtags,
         key: key,
+        timestamp: new Date().toISOString(),  // 추가된 부분
         positions: positions,
         shuttlecockStart: shuttlecockStart,
         shuttlecockEnd: shuttlecockEnd
     }];
+
+    // stateContentMap 업데이트
+    if (!stateContentMap[key]) {
+        stateContentMap[key] = [];
+    }
+    stateContentMap[key].push(newContent);
 
     saveStateContentMap(); // 로컬 스토리지에 저장
     updateEntireContents(); // 전체 콘텐츠 목록 업데이트
@@ -303,6 +311,23 @@ function getCurrentStateKey() {
     return key;
 }
 
+function updateEntireContents() {
+    const entireContents = document.getElementById('entire-contents');
+    entireContents.innerHTML = '';
+    const allContents = Object.values(stateContentMap).flat();
+    allContents.sort(() => Math.random() - 0.5);  // Randomize content order
+
+    allContents.forEach(item => {
+        const contentDiv = document.createElement('div');
+        contentDiv.innerHTML = `
+            <div class="text">${item.text}</div>
+            <iframe width="320" height="180" src="https://www.youtube.com/embed/${item.videoId}?start=${item.startTime}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <div class="hashtags">${item.hashtags.join(', ')}</div>
+            <button class="view-position-button" onclick="viewPosition('${item.key}')">View Position</button>`;
+        entireContents.appendChild(contentDiv);
+    });
+}
+
 function editContent(key, index) {
     const password = prompt("Enter password to edit:");
     if (password === "song") {
@@ -373,4 +398,50 @@ window.addEventListener('load', () => {
     stateContentMap = loadStateContentMap();
     updateEntireContents();
     checkState();
+});
+
+// Hashtag를 클릭하면 해당 Hashtag를 포함하는 콘텐츠를 필터링하여 최신순으로 나열
+function filterByHashtag(hashtag) {
+    const entireContentsDiv = document.getElementById('entire-contents');
+    entireContentsDiv.innerHTML = ''; // 기존 콘텐츠 삭제
+
+    // 최상단에 클릭한 Hashtag 표시
+    const hashtagHeader = document.createElement('h2');
+    hashtagHeader.textContent = `#${hashtag}`;
+    entireContentsDiv.appendChild(hashtagHeader);
+
+    // 모든 콘텐츠에서 Hashtag를 포함하는 항목 필터링
+    const filteredContents = [];
+    for (const key in stateContentMap) {
+        stateContentMap[key].forEach(content => {
+            if (content.hashtags.includes(hashtag)) {
+                filteredContents.push(content);
+            }
+        });
+    }
+
+    // 최신순으로 정렬 (추가 시간 데이터를 사용하여 구현 가능)
+    filteredContents.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    // 필터링된 콘텐츠를 최신순으로 나열
+    filteredContents.forEach(content => {
+        const hashtagsHtml = content.hashtags.map(tag => `<a href="#" class="hashtag-link" onclick="filterByHashtag('${tag}')">#${tag}</a>`).join(', ');
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'content-item';
+        contentDiv.innerHTML = `
+            <div class="text">${content.text}</div>
+            <iframe width="600" height="337.5" src="https://www.youtube.com/embed/${content.videoId}?start=${content.startTime}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <div class="hashtags">${hashtagsHtml}</div>
+        `;
+        entireContentsDiv.appendChild(contentDiv);
+    });
+}
+
+// Hashtag 링크에 대한 이벤트 리스너 설정
+document.querySelectorAll('.hashtag-link').forEach(hashtagLink => {
+    hashtagLink.addEventListener('click', event => {
+        event.preventDefault();
+        const hashtag = event.target.textContent.replace('#', '');
+        filterByHashtag(hashtag);
+    });
 });
